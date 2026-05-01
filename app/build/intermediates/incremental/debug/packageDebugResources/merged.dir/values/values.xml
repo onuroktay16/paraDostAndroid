@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ParaDost</string>
+    <style name="Theme.ParaDost" parent="android:Theme.Material.Light.NoActionBar"/>
+    <style name="Theme.ParaDost.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#1B5E20</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="windowSplashScreenIconBackgroundColor">#1B5E20</item>
+        <item name="postSplashScreenTheme">@style/Theme.ParaDost</item>
+    </style>
+</resources>
