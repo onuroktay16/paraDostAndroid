@@ -29,6 +29,9 @@ interface ExpenseDao {
     @Query("SELECT * FROM expenses WHERE isSynced = 0")
     suspend fun getUnsyncedExpenses(): List<ExpenseEntity>
 
+    @Query("SELECT * FROM expenses WHERE serverId = :serverId LIMIT 1")
+    suspend fun getByServerId(serverId: Int): ExpenseEntity?
+
     @Query("UPDATE expenses SET serverId = :serverId, isSynced = 1 WHERE id = :localId")
     suspend fun markExpenseSynced(localId: Int, serverId: Int)
 

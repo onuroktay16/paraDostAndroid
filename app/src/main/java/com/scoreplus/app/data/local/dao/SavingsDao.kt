@@ -10,6 +10,9 @@ interface SavingsDao {
     @Query("SELECT * FROM savings WHERE month = :month AND year = :year LIMIT 1")
     fun getSavingsByMonthYear(month: Int, year: Int): Flow<SavingsEntity?>
 
+    @Query("SELECT * FROM savings WHERE month = :month AND year = :year LIMIT 1")
+    suspend fun getSavingsByMonthYearSync(month: Int, year: Int): SavingsEntity?
+
     @Query("SELECT * FROM savings")
     fun getAllSavings(): Flow<List<SavingsEntity>>
 

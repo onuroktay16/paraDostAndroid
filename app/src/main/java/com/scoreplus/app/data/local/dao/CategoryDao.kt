@@ -16,8 +16,17 @@ interface CategoryDao {
     @Query("UPDATE categories SET serverId = :serverId, isSynced = 1 WHERE id = :localId")
     suspend fun markCategorySynced(localId: Int, serverId: Int)
 
+    @Query("SELECT * FROM categories WHERE serverId = :serverId LIMIT 1")
+    suspend fun getByServerId(serverId: Int): CategoryEntity?
+
+    @Query("SELECT * FROM categories WHERE name = :name LIMIT 1")
+    suspend fun getByName(name: String): CategoryEntity?
+
+    @Query("UPDATE categories SET serverId = :serverId, isSynced = 1 WHERE id = :localId")
+    suspend fun updateServerIdAndSynced(localId: Int, serverId: Int)
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertCategory(category: CategoryEntity)
+    suspend fun insertCategory(category: CategoryEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAll(categories: List<CategoryEntity>)

@@ -24,6 +24,9 @@ interface IncomeDao {
     @Query("SELECT * FROM income_items WHERE isSynced = 0")
     suspend fun getUnsyncedIncomeItems(): List<IncomeItemEntity>
 
+    @Query("SELECT * FROM income_items WHERE serverId = :serverId LIMIT 1")
+    suspend fun getByServerId(serverId: Int): IncomeItemEntity?
+
     @Query("UPDATE income_items SET serverId = :serverId, isSynced = 1 WHERE id = :localId")
     suspend fun markIncomeItemSynced(localId: Int, serverId: Int)
 
