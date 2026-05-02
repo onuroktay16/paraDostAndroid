@@ -36,4 +36,10 @@ interface CategoryDao {
 
     @Delete
     suspend fun deleteCategory(category: CategoryEntity)
+
+    @Query("DELETE FROM categories WHERE isDefault = 0")
+    suspend fun deleteCustomCategories()
+
+    @Query("UPDATE categories SET serverId = NULL, isSynced = 0")
+    suspend fun resetSyncStatus()
 }

@@ -26,6 +26,9 @@ interface ExpenseDao {
     @Query("SELECT SUM(amount) FROM expenses WHERE year = :year")
     fun getTotalExpensesByYear(year: Int): Flow<Double?>
 
+    @Query("DELETE FROM expenses")
+    suspend fun deleteAll()
+
     @Query("SELECT * FROM expenses WHERE isSynced = 0")
     suspend fun getUnsyncedExpenses(): List<ExpenseEntity>
 

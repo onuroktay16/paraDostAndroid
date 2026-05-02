@@ -118,76 +118,92 @@ class AuthViewModel(private val tokenStore: TokenStore, private val context: Con
     }
 
     private suspend fun pullFromBackend() {
-        try {
-            val app = context.applicationContext as ScorePlusApp
-            val remoteApi = app.api
-            val db = app.database
+        val app = context.applicationContext as ScorePlusApp
+        val remoteApi = app.api
+        val db = app.database
+        val categoryMapping = mutableMapOf<Int, Int>()
 
-            val categoryMapping = mutableMapOf<Int, Int>()
+        // 1. Kategoriler
+        try {
             val remoteCategories = remoteApi.getCategories()
             if (remoteCategories.isSuccessful) {
                 remoteCategories.body()?.forEach { remote ->
-                    val existing = db.categoryDao().getByServerId(remote.id)
-                    if (existing != null) {
-                        if (remote.localId != null) categoryMapping[remote.localId] = existing.id
-                    } else {
-                        val matchByName = db.categoryDao().getByName(remote.name)
-                        if (matchByName != null) {
-                            db.categoryDao().updateServerIdAndSynced(matchByName.id, remote.id)
-                            if (remote.localId != null) categoryMapping[remote.localId] = matchByName.id
+                    try {
+                        val existing = db.categoryDao().getByServerId(remote.id)
+                        if (existing != null) {
+                            if (remote.localId != null) categoryMapping[remote.localId] = existing.id
                         } else {
-                            val newId = db.categoryDao().insertCategory(
-                                com.scoreplus.app.data.local.entity.CategoryEntity(
-                                    name = remote.name, icon = remote.icon,
-                                    isDefault = remote.isDefault, serverId = remote.id, isSynced = true
+                            val matchByName = db.categoryDao().getByName(remote.name)
+                            if (matchByName != null) {
+                                db.categoryDao().updateServerIdAndSynced(matchByName.id, remote.id)
+                                if (remote.localId != null) categoryMapping[remote.localId] = matchByName.id
+                            } else {
+                                val newId = db.categoryDao().insertCategory(
+                                    com.scoreplus.app.data.local.entity.CategoryEntity(
+                                        name = remote.name, icon = remote.icon,
+                                        isDefault = remote.isDefault, serverId = remote.id, isSynced = true
+                                    )
                                 )
-                            )
-                            if (remote.localId != null) categoryMapping[remote.localId] = newId.toInt()
+                                if (remote.localId != null) categoryMapping[remote.localId] = newId.toInt()
+                            }
                         }
-                    }
+                    } catch (e: Exception) { Log.w("AuthViewModel", "Category pull item failed: ${e.message}") }
                 }
             }
+        } catch (e: Exception) { Log.w("AuthViewModel", "Category pull failed: ${e.message}") }
 
+        // 2. Gelirler
+        try {
             remoteApi.getIncome().body()?.forEach { remote ->
-                if (db.incomeDao().getByServerId(remote.id) == null) {
-                    db.incomeDao().insertIncomeItem(
-                        com.scoreplus.app.data.local.entity.IncomeItemEntity(
-                            amount = remote.amount, description = remote.description,
-                            date = remote.date.toLong(), month = remote.month, year = remote.year,
-                            serverId = remote.id, isSynced = true
+                try {
+                    if (db.incomeDao().getByServerId(remote.id) == null) {
+                        db.incomeDao().insertIncomeItem(
+                            com.scoreplus.app.data.local.entity.IncomeItemEntity(
+                                amount = remote.amount, description = remote.description,
+                                date = remote.date.toLong(), month = remote.month, year = remote.year,
+                                serverId = remote.id, isSynced = true
+                            )
                         )
-                    )
-                }
+                    }
+                } catch (e: Exception) { Log.w("AuthViewModel", "Income pull item failed: ${e.message}") }
             }
+        } catch (e: Exception) { Log.w("AuthViewModel", "Income pull failed: ${e.message}") }
 
+        // 3. Giderler
+        try {
             remoteApi.getExpenses().body()?.forEach { remote ->
-                if (db.expenseDao().getByServerId(remote.id) == null) {
-                    val localCategoryId = categoryMapping[remote.categoryLocalId] ?: remote.categoryLocalId
-                    db.expenseDao().insertExpense(
-                        com.scoreplus.app.data.local.entity.ExpenseEntity(
-                            categoryId = localCategoryId, amount = remote.amount,
-                            description = remote.description, date = remote.date.toLong(),
-                            month = remote.month, year = remote.year,
-                            serverId = remote.id, isSynced = true
+                try {
+                    if (db.expenseDao().getByServerId(remote.id) == null) {
+                        val localCategoryId = categoryMapping[remote.categoryLocalId] ?: remote.categoryLocalId
+                        db.expenseDao().insertExpense(
+                            com.scoreplus.app.data.local.entity.ExpenseEntity(
+                                categoryId = localCategoryId, amount = remote.amount,
+                                description = remote.description, date = remote.date.toLong(),
+                                month = remote.month, year = remote.year,
+                                serverId = remote.id, isSynced = true
+                            )
                         )
-                    )
-                }
+                    }
+                } catch (e: Exception) { Log.w("AuthViewModel", "Expense pull item failed: ${e.message}") }
             }
+        } catch (e: Exception) { Log.w("AuthViewModel", "Expenses pull failed: ${e.message}") }
 
+        // 4. Birikimler
+        try {
             remoteApi.getSavings().body()?.forEach { remote ->
-                if (db.savingsDao().getSavingsByMonthYearSync(remote.month, remote.year) == null) {
-                    db.savingsDao().upsertSavings(
-                        com.scoreplus.app.data.local.entity.SavingsEntity(
-                            month = remote.month, year = remote.year, amount = remote.amount, isSynced = true
+                try {
+                    if (db.savingsDao().getSavingsByMonthYearSync(remote.month, remote.year) == null) {
+                        db.savingsDao().upsertSavings(
+                            com.scoreplus.app.data.local.entity.SavingsEntity(
+                                month = remote.month, year = remote.year, amount = remote.amount, isSynced = true
+                            )
                         )
-                    )
-                }
+                    }
+                } catch (e: Exception) { Log.w("AuthViewModel", "Savings pull item failed: ${e.message}") }
             }
+        } catch (e: Exception) { Log.w("AuthViewModel", "Savings pull failed: ${e.message}") }
 
-            Log.d("AuthViewModel", "Pull from backend completed")
-        } catch (e: Exception) {
-            Log.w("AuthViewModel", "Pull failed: ${e.message}")
-        }
+        Log.d("AuthViewModel", "Pull from backend completed. CategoryMapping: $categoryMapping")
     }
 
     private suspend fun syncCategoriesNow() {

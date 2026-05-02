@@ -21,6 +21,9 @@ interface IncomeDao {
     @Query("SELECT SUM(amount) FROM income_items WHERE year = :year")
     fun getTotalIncomeByYear(year: Int): Flow<Double?>
 
+    @Query("DELETE FROM income_items")
+    suspend fun deleteAll()
+
     @Query("SELECT * FROM income_items WHERE isSynced = 0")
     suspend fun getUnsyncedIncomeItems(): List<IncomeItemEntity>
 

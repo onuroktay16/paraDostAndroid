@@ -97,20 +97,6 @@ fun ProfileScreen(onNavigateToLogin: () -> Unit) {
                     }
                 }
 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(2.dp)
-                ) {
-                    Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Bulut Senkronizasyon", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Box(modifier = Modifier.size(8.dp).background(Color(0xFF4CAF50), CircleShape))
-                            Text("Aktif — veriler buluta yedekleniyor", fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                        }
-                    }
-                }
-
                 Spacer(modifier = Modifier.weight(1f))
 
                 Button(

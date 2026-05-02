@@ -21,4 +21,7 @@ interface SavingsDao {
 
     @Query("DELETE FROM savings WHERE month = :month AND year = :year")
     suspend fun deleteSavings(month: Int, year: Int)
+
+    @Query("DELETE FROM savings")
+    suspend fun deleteAll()
 }
