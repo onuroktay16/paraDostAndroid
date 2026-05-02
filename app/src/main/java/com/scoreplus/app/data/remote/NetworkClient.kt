@@ -11,7 +11,7 @@ object NetworkClient {
 
     // Geliştirme sırasında localhost (emülatör için 10.0.2.2)
     // Production deploy sonrası gerçek URL ile değiştir
-    const val BASE_URL = "http://10.0.2.2:3000/"
+    const val BASE_URL = "https://paradostapi.onrender.com/"
 
     fun create(tokenStore: TokenStore): ParaDostApi {
         val logging = HttpLoggingInterceptor().apply {
