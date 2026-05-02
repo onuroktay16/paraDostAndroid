@@ -17,6 +17,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 
 data class AuthUiState(
     val isLoading: Boolean = false,
@@ -47,9 +49,12 @@ class AuthViewModel(private val tokenStore: TokenStore, private val context: Con
                 if (response.isSuccessful) {
                     val body = response.body()!!
                     tokenStore.saveAuth(body.accessToken, body.refreshToken, body.userId, body.email)
-                    pullFromBackend()
-                    syncCategoriesNow()
-                    SyncWorker.syncNow(context)
+                    val app = context.applicationContext as ScorePlusApp
+                    app.applicationScope.launch {
+                        pullFromBackend()
+                        syncCategoriesNow()
+                        SyncWorker.syncNow(context)
+                    }
                     _uiState.value = AuthUiState(isSuccess = true)
                 } else {
                     val msg = when (response.code()) {
