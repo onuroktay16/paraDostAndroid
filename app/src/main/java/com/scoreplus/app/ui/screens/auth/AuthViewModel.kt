@@ -1,9 +1,11 @@
 package com.scoreplus.app.ui.screens.auth
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.scoreplus.app.data.remote.NetworkClient
+import com.scoreplus.app.data.remote.SyncWorker
 import com.scoreplus.app.data.remote.TokenStore
 import com.scoreplus.app.data.remote.dto.LoginRequest
 import com.scoreplus.app.data.remote.dto.RefreshRequest
@@ -16,10 +18,11 @@ import kotlinx.coroutines.launch
 data class AuthUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
-    val isSuccess: Boolean = false
+    val isSuccess: Boolean = false,
+    val isLoggedOut: Boolean = false
 )
 
-class AuthViewModel(private val tokenStore: TokenStore) : ViewModel() {
+class AuthViewModel(private val tokenStore: TokenStore, private val context: Context) : ViewModel() {
 
     private val api = NetworkClient.create(tokenStore)
 
@@ -41,6 +44,7 @@ class AuthViewModel(private val tokenStore: TokenStore) : ViewModel() {
                 if (response.isSuccessful) {
                     val body = response.body()!!
                     tokenStore.saveAuth(body.accessToken, body.refreshToken, body.userId, body.email)
+                    SyncWorker.syncNow(context)
                     _uiState.value = AuthUiState(isSuccess = true)
                 } else {
                     val msg = when (response.code()) {
@@ -75,6 +79,7 @@ class AuthViewModel(private val tokenStore: TokenStore) : ViewModel() {
                 if (response.isSuccessful) {
                     val body = response.body()!!
                     tokenStore.saveAuth(body.accessToken, body.refreshToken, body.userId, body.email)
+                    SyncWorker.syncNow(context)
                     _uiState.value = AuthUiState(isSuccess = true)
                 } else {
                     val msg = when (response.code()) {
@@ -98,6 +103,7 @@ class AuthViewModel(private val tokenStore: TokenStore) : ViewModel() {
                 }
             } catch (_: Exception) {}
             tokenStore.clearAuth()
+            _uiState.value = AuthUiState(isLoggedOut = true)
         }
     }
 
@@ -106,11 +112,11 @@ class AuthViewModel(private val tokenStore: TokenStore) : ViewModel() {
     }
 }
 
-class AuthViewModelFactory(private val tokenStore: TokenStore) : ViewModelProvider.Factory {
+class AuthViewModelFactory(private val tokenStore: TokenStore, private val context: Context) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(AuthViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return AuthViewModel(tokenStore) as T
+            return AuthViewModel(tokenStore, context) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

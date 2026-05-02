@@ -3,9 +3,10 @@ package com.scoreplus.app.ui.navigation
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -28,6 +29,7 @@ import com.scoreplus.app.ui.screens.auth.RegisterScreen
 import com.scoreplus.app.ui.screens.categories.CategoryScreen
 import com.scoreplus.app.ui.screens.history.HistoryScreen
 import com.scoreplus.app.ui.screens.home.HomeScreen
+import com.scoreplus.app.ui.screens.profile.ProfileScreen
 import com.scoreplus.app.ui.screens.yearly.YearlyScreen
 
 sealed class BottomNavItem(val route: String, val label: String, val icon: ImageVector) {
@@ -35,13 +37,15 @@ sealed class BottomNavItem(val route: String, val label: String, val icon: Image
     object History : BottomNavItem("history", "Geçmiş", Icons.Default.DateRange)
     object Yearly : BottomNavItem("yearly", "Yıllık", Icons.Default.Star)
     object Categories : BottomNavItem("categories", "Kategoriler", Icons.Default.List)
+    object Profile : BottomNavItem("profile", "Hesap", Icons.Default.Person)
 }
 
 val bottomNavItems = listOf(
     BottomNavItem.Home,
     BottomNavItem.History,
     BottomNavItem.Yearly,
-    BottomNavItem.Categories
+    BottomNavItem.Categories,
+    BottomNavItem.Profile
 )
 
 @Composable
@@ -144,10 +148,13 @@ fun AppNavigation() {
                 YearlyScreen()
             }
             composable(BottomNavItem.Categories.route) {
-                CategoryScreen(
+                CategoryScreen()
+            }
+            composable(BottomNavItem.Profile.route) {
+                ProfileScreen(
                     onNavigateToLogin = {
                         navController.navigate("login") {
-                            popUpTo(BottomNavItem.Home.route) { inclusive = false }
+                            popUpTo(0) { inclusive = true }
                         }
                     }
                 )

@@ -9,7 +9,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,29 +23,19 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.scoreplus.app.ScorePlusApp
-import com.scoreplus.app.data.remote.TokenStore
 import com.scoreplus.app.data.local.entity.CategoryEntity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CategoryScreen(onNavigateToLogin: (() -> Unit)? = null) {
+fun CategoryScreen() {
     val context = LocalContext.current
     val app = context.applicationContext as ScorePlusApp
     val repository = app.repository
     val viewModel: CategoryViewModel = viewModel(factory = CategoryViewModelFactory(repository))
     val categories by viewModel.categories.collectAsStateWithLifecycle()
-    val isLoggedIn by app.tokenStore.isLoggedIn.collectAsStateWithLifecycle(initialValue = false)
-    val isGuestMode by app.tokenStore.isGuestMode.collectAsStateWithLifecycle(initialValue = false)
 
     var showAddDialog by remember { mutableStateOf(false) }
     var deleteTarget by remember { mutableStateOf<CategoryEntity?>(null) }
-    var showInfoDialog by remember { mutableStateOf(false) }
-
-    val appVersion = remember {
-        try {
-            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0.0"
-        } catch (e: Exception) { "1.0.0" }
-    }
 
     Scaffold(
         topBar = {
@@ -56,17 +45,7 @@ fun CategoryScreen(onNavigateToLogin: (() -> Unit)? = null) {
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = Color.White,
                     actionIconContentColor = Color.White
-                ),
-                actions = {
-                    if (isGuestMode && !isLoggedIn) {
-                        TextButton(onClick = { onNavigateToLogin?.invoke() }) {
-                            Text("Giriş Yap", color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                        }
-                    }
-                    IconButton(onClick = { showInfoDialog = true }) {
-                        Icon(Icons.Default.Info, contentDescription = "Hakkında", tint = Color.White.copy(alpha = 0.8f))
-                    }
-                }
+                )
             )
         },
         floatingActionButton = {
@@ -133,27 +112,6 @@ fun CategoryScreen(onNavigateToLogin: (() -> Unit)? = null) {
                 }
             }
         }
-    }
-
-    if (showInfoDialog) {
-        AlertDialog(
-            onDismissRequest = { showInfoDialog = false },
-            title = {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("💰", fontSize = 24.sp)
-                    Text("ParaDost", fontWeight = FontWeight.Bold)
-                }
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    InfoRow(label = "Versiyon", value = appVersion)
-                    InfoRow(label = "Geliştirici", value = "ParaDost Team")
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showInfoDialog = false }) { Text("Tamam") }
-            }
-        )
     }
 
     if (showAddDialog) {

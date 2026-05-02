@@ -31,7 +31,7 @@ fun LoginScreen(
 ) {
     val context = LocalContext.current
     val tokenStore = (context.applicationContext as ScorePlusApp).tokenStore
-    val viewModel: AuthViewModel = viewModel(factory = AuthViewModelFactory(tokenStore))
+    val viewModel: AuthViewModel = viewModel(factory = AuthViewModelFactory(tokenStore, context))
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
 
