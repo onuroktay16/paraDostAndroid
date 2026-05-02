@@ -1,12 +1,15 @@
 package com.scoreplus.app.ui.screens.auth
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.scoreplus.app.ScorePlusApp
 import com.scoreplus.app.data.remote.NetworkClient
 import com.scoreplus.app.data.remote.SyncWorker
 import com.scoreplus.app.data.remote.TokenStore
+import com.scoreplus.app.data.remote.dto.CategoryRequest
 import com.scoreplus.app.data.remote.dto.LoginRequest
 import com.scoreplus.app.data.remote.dto.RefreshRequest
 import com.scoreplus.app.data.remote.dto.RegisterRequest
@@ -44,6 +47,7 @@ class AuthViewModel(private val tokenStore: TokenStore, private val context: Con
                 if (response.isSuccessful) {
                     val body = response.body()!!
                     tokenStore.saveAuth(body.accessToken, body.refreshToken, body.userId, body.email)
+                    syncCategoriesNow()
                     SyncWorker.syncNow(context)
                     _uiState.value = AuthUiState(isSuccess = true)
                 } else {
@@ -79,6 +83,7 @@ class AuthViewModel(private val tokenStore: TokenStore, private val context: Con
                 if (response.isSuccessful) {
                     val body = response.body()!!
                     tokenStore.saveAuth(body.accessToken, body.refreshToken, body.userId, body.email)
+                    syncCategoriesNow()
                     SyncWorker.syncNow(context)
                     _uiState.value = AuthUiState(isSuccess = true)
                 } else {
@@ -109,6 +114,25 @@ class AuthViewModel(private val tokenStore: TokenStore, private val context: Con
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+
+    private suspend fun syncCategoriesNow() {
+        try {
+            val db = (context.applicationContext as ScorePlusApp).database
+            val categories = db.categoryDao().getUnsyncedCategories()
+            if (categories.isEmpty()) return
+            val requests = categories.map { CategoryRequest(it.name, it.icon, it.isDefault, it.id) }
+            val resp = api.bulkCreateCategories(requests)
+            if (resp.isSuccessful) {
+                resp.body()?.forEach { remote ->
+                    val local = categories.find { it.id == remote.localId }
+                    if (local != null) db.categoryDao().markCategorySynced(local.id, remote.id)
+                }
+                Log.d("AuthViewModel", "Synced ${categories.size} categories")
+            }
+        } catch (e: Exception) {
+            Log.w("AuthViewModel", "Category sync failed: ${e.message}")
+        }
     }
 }
 
